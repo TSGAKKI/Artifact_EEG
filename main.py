@@ -75,7 +75,7 @@ def main(args):
     print('noise_all:',noise_all.shape) # 3400 512
    
     # GPU 
-    noiseEEG_train_end_standard, EEG_train_end_standard, noiseEEG_test_end_standard, EEG_test_end_standard, std_VALUE = prepare_data(device, args.batch_size, EEG_all = EEG_all, noise_all = noise_all, combin_num = 10, \
+    noiseEEG_train_end_standard, EEG_train_end_standard, noiseEEG_test_end_standard, EEG_test_end_standard, std_VALUE = prepare_data(device, args.batch_size, EEG_all = EEG_all, noise_all = noise_all, combin_num = 1, \
         train_num = 3000, noise_type = args.noise_type)
     
     test_x = torch.from_numpy(noiseEEG_test_end_standard).type(torch.FloatTensor)#.to(DEVICE)  # (B, N, F, T)
@@ -84,11 +84,13 @@ def main(args):
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
     
     #k    
-    k=10
+    k=1
     all_scores=[]
-    num_val_samples=len(noiseEEG_train_end_standard)//k
+    #if 10fold validation 30000//10=3000
+    # num_val_samples=len(noiseEEG_train_end_standard)//k
+    num_val_samples=400
     print('num_val_samples',num_val_samples)
-    for i in range(10):
+    for i in range(k):
         log.info('processing fold # {}'.format(i))
         partial_noiseEEG_train=np.concatenate([noiseEEG_train_end_standard[:i*num_val_samples], noiseEEG_train_end_standard[(i+1)*num_val_samples:]], axis=0) 
         partial_EEG_train=np.concatenate([EEG_train_end_standard[:i*num_val_samples],EEG_train_end_standard[(i+1)*num_val_samples:]],axis=0) 
@@ -143,7 +145,7 @@ def main(args):
                                 is_test=False
                             )
     test_results = evaluate(model,
-                            test_loader,
+                            val_loader,
                             args,
                             device,
                             args.save_dir,log,                          
