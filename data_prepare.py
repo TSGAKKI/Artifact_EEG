@@ -127,14 +127,9 @@ def prepare_data(DEVICE,batch_size,EEG_all, noise_all, combin_num, train_num, no
     # combin eeg and noise for test set 
     EEG_test = []
     noise_EEG_test = []
-    noise_EEG_Targe_test = []
-    
-    #pick a SNR
     for i in range(1):
         
         noise_eeg_test = []
-        noise_eeg_Target_test = []
-        
         for j in range(eeg_test.shape[0]):
             eeg = eeg_test[j]
             noise = noise_test[j]
@@ -144,63 +139,36 @@ def prepare_data(DEVICE,batch_size,EEG_all, noise_all, combin_num, train_num, no
             neeg = noise + eeg
             
             noise_eeg_test.append(neeg)
-            #Target EEG_noise
-            eeg = eeg_test[j]
-            noise = noise_test[j]
-            
-            coe = get_rms(eeg) / (get_rms(noise) * SNR_test[i])
-            noise = noise * coe
-            neeg = noise - eeg
-            
-            noise_eeg_Target_test.append(neeg)        
-        EEG_test.extend(eeg_test)
         
-        noise_EEG_Targe_test.extend(noise_eeg_Target_test)        
+        EEG_test.extend(eeg_test)
         noise_EEG_test.extend(noise_eeg_test)
 
 
     noise_EEG_test = np.array(noise_EEG_test)
-    noise_EEG_Targe_test = np.array(noise_EEG_Targe_test)
     EEG_test = np.array(EEG_test)
 
 
     # std for noisy EEG
     EEG_test_end_standard = []
-
     noiseEEG_test_end_standard = []
-    noiseEEG_test_Target_end_standard = []
-
     std_VALUE = []
-    std_VALUE_Target = []
     for i in range(noise_EEG_test.shape[0]):
-        #-----------------
+        
         # store std value to restore EEG signal
         std_value = np.std(noise_EEG_test[i])
         std_VALUE.append(std_value)
-
-        std_value_Target = np.std(noise_EEG_Targe_test[i])
-        std_VALUE_Target.append(std_value_Target)
-
-#-------------------------
 
         # Each epochs of eeg and neeg was divide by the standard deviation
         eeg_test_all_std = EEG_test[i] / std_value
         EEG_test_end_standard.append(eeg_test_all_std)
 
-        # eeg_test_all_std_Target = EEG_test[i] / std_value_Target
-        # EEG_test_end_standard.append(eeg_test_all_std_Target)
-
         noiseeeg_test_end_standard = noise_EEG_test[i] / std_value
         noiseEEG_test_end_standard.append(noiseeeg_test_end_standard)
 
-        noiseeeg_test_Target_end_standard = noise_EEG_Targe_test[i] / std_value_Target
-        noiseEEG_test_Target_end_standard.append(noiseeeg_test_Target_end_standard)
-
     std_VALUE = np.array(std_VALUE)
     noiseEEG_test_end_standard = np.array(noiseEEG_test_end_standard)
-    noiseEEG_test_Target_end_standard = np.array(noiseEEG_test_Target_end_standard)
-
-    print('test data prepared, test data shape: ', noiseEEG_test_end_standard.shape,noiseEEG_test_Target_end_standard.shape)
+    EEG_test_end_standard = np.array(EEG_test_end_standard)
+    print('test data prepared, test data shape: ', noiseEEG_test_end_standard.shape, EEG_test_end_standard.shape)
 
     #--input data
     # train_x = torch.from_numpy(noiseEEG_train_end_standard).type(torch.FloatTensor)#.to(DEVICE)  # (B, N, F, T)
@@ -214,5 +182,5 @@ def prepare_data(DEVICE,batch_size,EEG_all, noise_all, combin_num, train_num, no
     # test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     # return train_loader, test_loader 
 
-    return noiseEEG_train_end_standard, noiseEEG_train_Target_end_standard, noiseEEG_test_end_standard, noiseEEG_test_Target_end_standard, std_VALUE
+    return noiseEEG_train_end_standard, noiseEEG_train_Target_end_standard, noiseEEG_test_end_standard, EEG_test_end_standard, std_VALUE
   

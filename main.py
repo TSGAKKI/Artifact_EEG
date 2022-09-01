@@ -84,11 +84,14 @@ def main(args):
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
     
     #k    
-    k=1
+    k=10
     all_scores=[]
     #if 10fold validation 30000//10=3000
-    # num_val_samples=len(noiseEEG_train_end_standard)//k
-    num_val_samples=400
+    num_val_samples=len(noiseEEG_train_end_standard)//k
+
+    #nomal data
+    # num_val_samples=400
+
     print('num_val_samples',num_val_samples)
     for i in range(k):
         log.info('processing fold # {}'.format(i))
@@ -137,6 +140,7 @@ def main(args):
                     'For fine-tuning, provide pretrained model in load_model_path!')
     
         # Evaluate on test set
+        # before we got best model,then we use the best to eval
         val_results = evaluate(model,
                                 val_loader,
                                 args,
@@ -144,8 +148,10 @@ def main(args):
                                 args.save_dir,log,                          
                                 is_test=False
                             )
+        all_scores.append(val_results)
+        log.info('fold {} val_loss: {:.3f}'.format(i,val_results))
     test_results = evaluate(model,
-                            val_loader,
+                            test_loader,
                             args,
                             device,
                             args.save_dir,log,                          
@@ -195,8 +201,8 @@ def train(model, train_loader, val_loader,args, device, save_dir, log): #, tbx
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            
-
+                    
+        #it is save model by eval loss  
         if epoch % args.eval_every == 0:
             # Evaluate and save checkpoint
             log.info('Evaluating at epoch {}...'.format(epoch))
@@ -206,7 +212,7 @@ def train(model, train_loader, val_loader,args, device, save_dir, log): #, tbx
                                     device,
                                     save_dir,log,
                                     is_test=False)
-            log.info('Evaluating loss {}...'.format(eval_results))
+            # log.info('Evaluating loss {}...'.format(eval_results))
             # print('Evaluating loss {}...'.format(eval_results))
             best_path = saver.save(epoch,
                                     model,
